@@ -38,9 +38,6 @@ defmodule Aoc23.Day04 do
       |> Enum.map(fn card -> only_existing_cards(card, num_cards) end)
       |> Enum.into(%{})
 
-    k = Map.keys(card_winnings)
-    Enum.flat_map(k, fn key -> Enum.filter(Map.get(card_winnings, key), fn it -> it == key end) end)
-
     reduce_cards(Enum.to_list(1..num_cards), card_winnings)
     |> Map.values
     |> Enum.sum
