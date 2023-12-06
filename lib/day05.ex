@@ -123,50 +123,103 @@ What is the lowest location number that corresponds to any of the initial seed n
       |> hd
       |> Aoc23.Day05Parser.parseSeeds
 
-    {stage1, data} =
-      data
-      |> tl
-      |> tl
-      |> tl
-      |> process_stage
+    data = tl(tl(data))
 
-    {stage2, data} =
-      data
-      |> tl
-      |> process_stage
-
-    {stage3, data} =
-      data
-      |> tl
-      |> process_stage
-
-    {stage4, data} =
-      data
-      |> tl
-      |> process_stage
-
-    {stage5, data} =
-      data
-      |> tl
-      |> process_stage
-
-    {stage6, data} =
-      data
-      |> tl
-      |> process_stage
-
-    {stage7, _} =
-      data
-      |> tl
-      |> process_stage
-
-    stages = [stage7, stage6, stage5, stage4, stage3, stage2, stage1]
+    stages = generate_stages(data, [])
 
     pairs = gen_pairs(seeds)
-    
-    Enum.reduce_while(Stream.iterate(0, fn n -> n + 1 end), {pairs, stages}, &process_possible_seed/2)
+
+    # Solution using reverse transforms. Requires stages be lists
+    # Enum.reduce_while(Stream.iterate(0, fn n -> n + 1 end), {pairs, stages}, &process_possible_seed/2)
+
+    # Solution using filled stages. Requires stages be arrays
+    pairs
+    |> Enum.flat_map(fn pair -> progress_seed(pair, stages) end)
+    |> Enum.map(fn {k, _} -> k end)
+    |> Enum.min
   end
 
+  ### The correct solution
+  def progress_seed(seed, stages) do
+    for stage <- stages, reduce: [seed] do
+      acc -> Enum.flat_map(acc, fn item -> progress_stage(item, stage,[]) end)
+    end
+  end
+
+  def progress_stage({key, len}, stage, result) do
+    {src, dest, stage_len} = lookup(stage, {key, len})
+    if (src + stage_len) >= (key + len) do
+      [{dest + (key - src), len} | result]
+    else
+      consumed_len = (src + stage_len) - key
+      progress_stage({key + consumed_len, len - consumed_len}, stage, [{dest + (key - src), consumed_len} | result])
+    end
+  end
+
+  # Binary search to find the correct transform for a key in a stage
+  def lookup(stage, seed), do: lookup(stage, seed, 0, Arrays.size(stage) - 1)
+  def lookup(stage, {seed_low, seed_len}, l, r) do
+    if l > r do
+      {seed_low, seed_low, seed_len}
+    else
+      m = div(l + r, 2)
+      {src, _, stage_len} = stage[m]
+      cond do
+        src + stage_len <= seed_low -> lookup(stage, {seed_low, seed_len}, m + 1, r)
+        src > seed_low -> lookup(stage, {seed_low, seed_len}, l, m - 1)
+        true -> stage[m]
+      end
+    end
+  end
+  ###
+
+  ### Stage generation
+  def generate_stages(nil, result), do: Enum.reverse(result)
+  def generate_stages(data, result) do
+    {stage, remaining} = process_stage(data)
+    generate_stages(remaining, [stage | result])
+  end
+
+  def gen_pairs(seeds), do: gen_pairs(seeds, [])
+  def gen_pairs([], result), do: result
+  def gen_pairs([l | [len | rest]], result), do: gen_pairs(rest, [{l, len} | result])
+
+  def fill_stage(stage), do: fill_stage(stage, 0, [])
+  def fill_stage([], _, result), do: result
+  def fill_stage([{s, d, l} | rest], current, result) do
+    if (current < s) do
+      fill_stage(rest, s + l, [{s,d,l} | [{current, current, s - current} | result]])
+    else
+      fill_stage(rest, s + l, [{s,d,l} | result])
+    end
+  end
+
+  def finalize_stage(stage, data) do
+    stage
+    |> Enum.sort(fn {s1, _, _}, {s2, _, _} -> s1 <= s2 end)
+    |> fill_stage
+    |> Enum.reverse
+    |> Enum.into(Arrays.new())
+    |> then(fn arr -> {arr, data} end)
+  end
+
+  def process_stage(data), do: process_stage(tl(data), [])
+  def process_stage([], result), do: finalize_stage(result, nil)
+  def process_stage([line | rest], result) do
+    case line do
+      "" -> 
+        finalize_stage(result, rest)
+      _ ->
+        {:ok, parsed_line, _, _, _, _} = Aoc23.Day05Parser.parseMap line
+        process_stage(rest, [transform_line(parsed_line) | result])
+    end
+  end
+  
+  def transform_line([dest, source, len]), do: {source, dest, len}
+  ###
+
+  ### The solution when we try to search for a location that turns into a seed that exists
+  ### This works, but is kind of slow (a minute or so runtime)
   def process_possible_seed(location, {seeds, stages}) do
     seed = Enum.reduce(stages, location, &reverse_stage/2)
     if is_seed(seed, seeds) do
@@ -193,30 +246,7 @@ What is the lowest location number that corresponds to any of the initial seed n
       reverse_stage(rest, output)
     end
   end
-
-  def gen_pairs(seeds), do: gen_pairs(seeds, [])
-  def gen_pairs([], result), do: result
-  def gen_pairs([l | [len | rest]], result), do: gen_pairs(rest, [{l, len} | result])
-
-  def finalize_stage(stage, data) do
-    stage
-    |> Enum.sort(fn {s1, _, _}, {s2, _, _} -> s1 <= s2 end)
-    |> then(fn arr -> {arr, data} end)
-  end
-
-  def process_stage(data), do: process_stage(data, [])
-  def process_stage([], result), do: finalize_stage(result, nil)
-  def process_stage([line | rest], result) do
-    case line do
-      "" -> 
-        finalize_stage(result, rest)
-      _ ->
-        {:ok, parsed_line, _, _, _, _} = Aoc23.Day05Parser.parseMap line
-        process_stage(rest, [transform_line(parsed_line) | result])
-    end
-  end
-  
-  def transform_line([dest, source, len]), do: {source, dest, len}
+  ###
 end
 
 defmodule Aoc23.Day05Parser do
@@ -234,15 +264,11 @@ defmodule Aoc23.Day05Parser do
   ignore(string("seeds:"))
   |> concat(repeat(number))
 
-  name =
-  utf8_string([], min: 1)
-
   map =
     number
     |> concat(number)
     |> concat(number)
 
   defparsec(:parseSeeds, seeds)
-  defparsec(:parseMapName, name)
   defparsec(:parseMap, map)
 end
