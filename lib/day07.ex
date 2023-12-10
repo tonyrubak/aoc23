@@ -9,13 +9,13 @@ defmodule Aoc23.Day07 do
     |> Enum.map(&parse_line/1)
   end
 
-  def process_data(data) do
-    data
-    |> Enum.map(fn {hand, bid} -> %CamelCardsHand{cards: hand, bid: bid} end)
-    |> Enum.sort(CamelCardsHand)
-    |> Enum.reverse
-    |> hands_reducer
-  end
+  # def process_data(data) do
+    # data
+    # |> Enum.map(fn {hand, bid} -> %CamelCardsHand{cards: hand, bid: bid} end)
+    # |> Enum.sort(CamelCardsHand)
+    # |> Enum.reverse
+    # |> hands_reducer
+  # end
 
   def parse_line(line) do
     {:ok, data, _, _, _, _} = Aoc23.Day07Parser.parse(line)
