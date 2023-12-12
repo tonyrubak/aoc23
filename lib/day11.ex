@@ -1,4 +1,6 @@
 defmodule Aoc23.Day11 do
+  @expansion_factor 1_000_000
+
   def read_data do
     {:ok, content} = File.read("data/day11.txt")
 
@@ -38,43 +40,34 @@ defmodule Aoc23.Day11 do
     |> Enum.map(&Tuple.to_list/1)
   end
 
-  def expansion_helper(space, coord, factor), do: expansion_helper(space, coord, 1, factor, [])
-  def expansion_helper([], _, _, _, result), do: result
-  def expansion_helper([row | rest], coord, out_coord, factor, result) do
-    case Enum.all?(row, fn {{_, _}, char} -> char == ?. end) do
-      true -> expansion_helper(rest, coord, out_coord + factor, factor, result)
-      false ->
-        output =
-          case coord do
-            :x -> Enum.map(row, fn {{_, y}, point} -> {{out_coord, y}, point} end)
-            :y -> Enum.map(row, fn {{x, _}, point} -> {{x, out_coord}, point} end)
-          end
-        expansion_helper(rest, coord, out_coord + 1, factor, [output | result])
+  def is_blank_line(row), do: Enum.all?(row, fn {_, char} -> char == ?. end)
+
+  def transform_line(row, coord, out_coord) do
+    case coord do
+      :x -> Enum.map(row, fn {{_, y}, point} -> {{out_coord, y}, point} end)
+      :y -> Enum.map(row, fn {{x, _}, point} -> {{x, out_coord}, point} end)
     end
   end
 
-  def expansion(space, factor) do
+  def expansion_helper(space, coord), do: expansion_helper(space, coord, 1, [])
+  def expansion_helper([], _, _, result), do: result
+  def expansion_helper([row | rest], coord, out_coord, result) do
+    if is_blank_line(row) do
+      expansion_helper(rest, coord, out_coord + @expansion_factor,  result)
+    else
+      output = transform_line(row, coord, out_coord)
+      expansion_helper(rest, coord, out_coord + 1, [output | result])
+    end
+  end
+
+  def expansion(space) do
     space
-    |> then(fn it -> expansion_helper(it, :x, factor) end)
+    |> then(fn it -> expansion_helper(it, :x) end)
     |> Enum.reverse
     |> transpose
-    |> then(fn it -> expansion_helper(it, :y, factor) end)
+    |> then(fn it -> expansion_helper(it, :y) end)
     |> Enum.reverse
     |> transpose
-  end
-
-  def find_galaxies space do
-    for {row, y} <- List.zip([space, Enum.to_list(1..length(space))]), reduce: [] do
-      acc ->
-        galaxies = for {point, x} <- List.zip([row, Enum.to_list(1..length(row))]), reduce: [] do
-            acc ->
-              case point do
-                ?\# -> [{x,y} | acc]
-                _ -> acc
-              end
-          end
-        acc ++ Enum.reverse(galaxies)
-    end
   end
 
   def taxicab_metric({x1,y1}, {x2,y2}) do
@@ -106,7 +99,7 @@ defmodule Aoc23.Day11 do
   def process_data data do
     data
     |> label_galaxy
-    |> then(&(expansion(&1, 1_000_000)))
+    |> expansion
     |> List.flatten
     |> Enum.filter(fn {_, point} -> point == ?\# end)
     |> Enum.map(fn {point, _} -> point end)

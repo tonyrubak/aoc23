@@ -3,6 +3,7 @@
   "benchwarmer": {:hex, :benchwarmer, "0.0.2", "902e5c020608647b07c38b82103e4af6d2667dfd5d5d13c67382238de6943136", [:mix], [], "hexpm", "8b98b39c1c50df624f9c2d13ca953eeed465eed6feda975da26b479df2b4c9f5"},
   "extractable": {:hex, :extractable, "1.0.1", "2cf2b213cbda82eb578c821de48fa313cddfa7573b256bce4306248f56b44509", [:mix], [{:type_check, "~> 0.8", [hex: :type_check, repo: "hexpm", optional: false]}], "hexpm", "820e9db7550a62c7d63b760a8da51ab2341ba425563955db005baadcb403b046"},
   "insertable": {:hex, :insertable, "1.0.0", "879c7023b5491bbb694dff78422c94faded616fda963e529916343bc6e35162f", [:mix], [{:type_check, "~> 0.8", [hex: :type_check, repo: "hexpm", optional: false]}], "hexpm", "4b3f60169221a1ace67fdfe8b0d3c35708c098e55df549d4a374b9a7b0255af4"},
+  "memoize": {:hex, :memoize, "1.4.2", "cc289c7f1b86a37e7278180aa382bdc8935e8280cbf41659482d29d843bcd16d", [:mix], [], "hexpm", "daabbbf763b07bc2a2aedba6c87945cbc3d9100e46cfa651923a81e098adbcfa"},
   "nimble_parsec": {:hex, :nimble_parsec, "1.4.0", "51f9b613ea62cfa97b25ccc2c1b4216e81df970acd8e16e8d1bdc58fef21370d", [:mix], [], "hexpm", "9c565862810fb383e9838c1dd2d7d2c437b3d13b267414ba6af33e50d2d1cf28"},
   "type_check": {:hex, :type_check, "0.13.5", "b41ce95808546e9913d7d56d0886ae8298c4298c9ff596fd7987c5000a2d2316", [:mix], [{:credo, "~> 1.5", [hex: :credo, repo: "hexpm", optional: true]}, {:stream_data, "~> 0.5.0", [hex: :stream_data, repo: "hexpm", optional: true]}], "hexpm", "6196910e3cec69b4e2cec71f8d9f243532aeeb37924a86e8256bc5ee05b3fd00"},
 }
