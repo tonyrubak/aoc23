@@ -48,19 +48,19 @@ defmodule Aoc23.Day12.Row do
         0
       broken == [] ->
         1
+      length(line) > 0 and hd(line) == :unknown ->
+        [:operational, :broken]
+        |> Enum.map(fn state -> count_possibilities(%{row | line: [state | tl(line)]}, working) end)
+        |> Enum.sum
       hd(broken) == working ->
         case line do
           [:broken | _] ->
             0
-          [:unknown | _] ->
-            count_possibilities(%{line: [:operational | tl(line)], broken: broken}, working) + count_possibilities(%{line: [:broken | tl(line)], broken: broken}, working)
           _ ->
             count_possibilities(%{line: line, broken: tl(broken)}, 0)
         end
       line == [] ->
         0
-      hd(line) == :unknown ->
-        count_possibilities(%{row | line: [:operational | tl(line)]}, working) + count_possibilities(%{row | line: [:broken | tl(line)]}, working)
       hd(line) == :broken -> count_possibilities(%{line: tl(line), broken: broken}, working + 1)
       hd(line) == :operational and working != 0 ->
         0
