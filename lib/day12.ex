@@ -36,6 +36,7 @@ end
 defmodule Aoc23.Day12.Row do
   use Memoize
   defstruct line: [], broken: []
+
   defmemo count_possibilities(%{line: line, broken: broken}) do
     count_possibilities(%Aoc23.Day12.Row{line: Enum.reverse(line), broken: Enum.reverse(broken)}, 0)
   end
